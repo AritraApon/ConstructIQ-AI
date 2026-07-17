@@ -80,7 +80,7 @@ export default function CTASection() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Link
-              href="/register"
+              href="/items/add"
               className="group relative flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-[#020617] px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-200 hover:shadow-[0_0_50px_rgba(16,185,129,0.5)] active:scale-95"
             >
               Start Planning Free

@@ -48,9 +48,11 @@ export default function Navbar() {
     { name: "Home", href: "/" },
     { name: "Explore", href: "/explore" },
     ...(session ? [
-      { name: "Create Estimate", href: "/items/add" }, 
+      { name: "Create Estimate", href: "/items/add" },
       { name: "Manage Estimates", href: "/items/manage" }
     ] : []),
+    { name: "About", href: "/about" },
+    { name: "Support", href: "/support" },
   ];
   const isActive = (path: string) => pathname === path;
 
