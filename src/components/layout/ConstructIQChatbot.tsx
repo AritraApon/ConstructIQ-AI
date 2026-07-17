@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { postMutation } from "@/lib/core/server";
+import { authClient } from "@/lib/auth-client";
 
 interface Message {
   id: string;
@@ -11,12 +12,16 @@ interface Message {
   timestamp: Date;
 }
 
+const { data: session, error } = await authClient.getSession()
+const user = session?.user;
+const name = user?.name || "User";
+
 export default function ConstructIQChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
-      text: "Hello! I am your ConstructIQ Assistant. Ask me anything about civil engineering estimations, project planning, or cost calculations!",
+      text: `Hello  "${name}" ! I am your ConstructIQ Assistant. Ask me anything about civil engineering estimations, project planning, or cost calculations!`,
       sender: "bot",
       timestamp: new Date(),
     },
