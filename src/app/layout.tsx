@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import { ToastContainer } from "react-toastify";
+import ConstructIQChatbot from "@/components/layout/ConstructIQChatbot";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,10 +32,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="bg-[#020617] text-[#F8FAFC] min-h-screen selection:bg-[#10B981]/30 selection:text-[#10B981]">
-        <Navbar/>
+        <Navbar />
         {children}
-          <ToastContainer position="top-center" />
-        </body>
+         <ConstructIQChatbot />
+        <ToastContainer position="top-center" />
+      </body>
     </html>
   );
 }
+
