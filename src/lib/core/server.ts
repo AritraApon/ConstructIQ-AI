@@ -138,3 +138,23 @@ export const deleteMutation = async <T>(url: string): Promise<T | { error: true;
     return { error: true, message: error.message || "Server connection failed!" };
   }
 };
+
+
+
+export const getProjects = async (): Promise<any> => {
+
+  const res = await getMutation<any>('/api/projects');
+  if (res && 'error' in res) {
+    throw new Error(res.message);
+  }
+  return res; // এটি পুরো অবজেক্ট { success: true, data: [...] } রিটার্ন করবে
+};
+
+export const deleteProject = async (id: string): Promise<boolean> => {
+
+  const res = await deleteMutation<any>(`/api/projects/${id}`);
+  if (res && 'error' in res) {
+    return false;
+  }
+  return res?.success === true;
+};
