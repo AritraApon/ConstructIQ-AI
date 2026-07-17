@@ -1,35 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-
-// Better Auth-এর ক্লায়েন্ট স্টেট (তোমার auth client ফাইল অনুযায়ী ইমপোর্ট পাথ চেঞ্জ করতে পারো)
-// আপাতত আমি dummy state দিয়ে রাখছি যাতে তোমার কোড না ভাঙে। পরে auth.useSession() দিয়ে কানেক্ট করে নেবে।
-const useSessionMock = () => {
-  // auth setup করার পর এটা সরিয়ে অরিজিনাল Better Auth session ইউজ করবে
-  const session = null; // লগইন স্টেট টেস্ট করতে এটাকে { user: { name: "Aritro" } } বানিয়ে দেখতে পারো
-  const isPending = false;
-  return { data: session, isPending };
-};
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // Mobile menu state
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Profile dropdown state
   const pathname = usePathname();
-  const { data: session, isPending } = useSessionMock();
+  const router = useRouter();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Better Auth Logout function (এখানে তোমার অরিজিনাল signout ফাংশন কল হবে)
+  // Better Auth Session Hook
+  const { data: session, isPending } = authClient.useSession();
+
+  // Close dropdown on clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Better Auth Sign Out Handler
   const handleLogout = async () => {
-    console.log("Logging out...");
-    // await authClient.signOut()
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            setIsDropdownOpen(false);
+            setIsOpen(false);
+            router.push("/login");
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
-  const navLinks = [
+ const navLinks = [
     { name: "Home", href: "/" },
     { name: "Explore", href: "/explore" },
-    ...(session ? [{ name: "Manage Estimates", href: "/items/manage" }] : []),
+    ...(session ? [
+      { name: "Create Estimate", href: "/items/add" }, 
+      { name: "Manage Estimates", href: "/items/manage" }
+    ] : []),
   ];
-
   const isActive = (path: string) => pathname === path;
 
   return (
@@ -66,21 +88,53 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Auth Buttons / Profile Panel */}
+          {/* Auth Buttons / Profile Dropdown (Desktop) */}
           <div className="hidden md:block">
             {isPending ? (
-              <div className="h-8 w-20 animate-pulse rounded-lg bg-[#0F172A]" />
+              <div className="h-9 w-9 animate-pulse rounded-full bg-[#0F172A]" />
             ) : session ? (
-              <div className="flex items-center space-x-4">
-                <span className="text-sm font-medium text-[#F8FAFC]/90">
-                  Hi, <span className="text-[#38BDF8]">{session.user?.name || "User"}</span>
-                </span>
+              <div className="relative" ref={dropdownRef}>
+                {/* User Avatar Button */}
                 <button
-                  onClick={handleLogout}
-                  className="rounded-lg border border-[#10B981]/20 bg-[#10B981]/10 px-4 py-2 text-sm font-semibold text-[#10B981] transition-all duration-200 hover:bg-[#10B981] hover:text-[#020617] hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center space-x-2 rounded-full p-1 border border-[#10B981]/20 bg-[#0F172A]/40 transition-all hover:border-[#10B981]/60 focus:outline-none"
                 >
-                  Logout
+                  <div className="relative h-8 w-8 overflow-hidden rounded-full bg-[#020617]">
+                    <Image
+                      src={session.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"}
+                      alt={session.user?.name || "User Profile"}
+                      fill
+                      sizes="32px"
+                      className="object-cover"
+                      priority
+                    />
+                  </div>
+                  <span className="pr-2 text-sm font-semibold text-[#F8FAFC] max-w-[120px] truncate">
+                    {session.user?.name?.split(" ")[0]}
+                  </span>
+                  <svg className={`h-4 w-4 text-[#F8FAFC]/60 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
+
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-xl border border-emerald-500/10 bg-[#0F172A]/90 p-1.5 shadow-2xl backdrop-blur-xl ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsDropdownOpen(false)}
+                      className="flex w-full items-center px-4 py-2 text-sm text-[#F8FAFC]/80 rounded-lg hover:bg-[#10B981]/10 hover:text-[#10B981] transition-colors"
+                    >
+                      My Profile
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center px-4 py-2 text-sm text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center space-x-4">
@@ -106,8 +160,6 @@ export default function Navbar() {
               onClick={() => setIsOpen(!isOpen)}
               type="button"
               className="inline-flex items-center justify-center rounded-md p-2 text-[#F8FAFC]/80 hover:bg-[#0F172A] hover:text-[#10B981] focus:outline-none"
-              aria-controls="mobile-menu"
-              aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
               {!isOpen ? (
@@ -147,15 +199,35 @@ export default function Navbar() {
           <div className="border-t border-[#0F172A] pt-4 mt-4 px-3">
             {session ? (
               <div className="flex flex-col space-y-3">
-                <span className="text-sm font-medium text-[#F8FAFC]/90">
-                  Signed in as <span className="text-[#38BDF8]">{session.user?.name}</span>
-                </span>
+                <div className="flex items-center space-x-3">
+                  <div className="relative h-10 w-10 overflow-hidden rounded-full bg-[#020617] border border-[#10B981]/20">
+                    <Image
+                      src={session.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80"}
+                      alt={session.user?.name || "User Profile"}
+                      fill
+                      sizes="40px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#F8FAFC]">
+                      {session.user?.name}
+                    </p>
+                    <p className="text-xs text-[#F8FAFC]/40">{session.user?.email}</p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/profile"
+                  onClick={() => setIsOpen(false)}
+                  className="w-full text-center rounded-lg border border-[#10B981]/10 bg-[#10B981]/5 py-2 text-sm font-semibold text-[#F8FAFC] hover:bg-[#10B981]/15"
+                >
+                  My Profile
+                </Link>
+
                 <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsOpen(false);
-                  }}
-                  className="w-full rounded-lg border border-[#10B981]/20 bg-[#10B981]/10 py-2 text-center text-sm font-semibold text-[#10B981]"
+                  onClick={handleLogout}
+                  className="w-full rounded-lg border border-red-500/20 bg-red-500/10 py-2 text-center text-sm font-semibold text-red-400"
                 >
                   Logout
                 </button>
