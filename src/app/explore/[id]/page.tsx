@@ -55,27 +55,38 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
   }, [id]);
 
   // Parse AI markdown estimate for material and cost data
+ // 🧠 Smart Markdown Parser for AI Estimates
   const parsedData = useMemo(() => {
     if (!project?.aiEstimate) return null;
 
     const raw = project.aiEstimate;
 
-    // RegEx patterns matching the AI markdown output
-    const cementBags = parseInt(raw.match(/Cement:?\s*.*?(\d+)\s*bags/i)?.[1] || "0");
-    const cementCost = parseInt(raw.match(/Cement.*?BDT\s*([\d,]+)/i)?.[1].replace(/,/g, "") || "0");
+    // Helper function to extract numbers securely near keywords
+    const extractNumber = (regex: RegExp, fallback = "0") => {
+      const match = raw.match(regex);
+      return match ? match[1].replace(/,/g, "") : fallback;
+    };
 
-    const steelTons = parseFloat(raw.match(/Steel:?\s*.*?([\d.]+)\s*tons/i)?.[1] || "0");
-    const steelCost = parseInt(raw.match(/Steel.*?BDT\s*([\d,]+)/i)?.[1].replace(/,/g, "") || "0");
+    // 🌟 ১. মেটেরিয়াল পরিমাণের নিখুঁত এক্সট্র্যাকশন
+    const cementBags = parseInt(extractNumber(/Cement\b.*?(\d[\d,]*)\s*bags/i));
+    const steelTons = parseFloat(extractNumber(/Steel\b.*?(\d[\d,.]*)\s*tons/i));
+    const sandCft = parseInt(extractNumber(/Sand\b.*?(\d[\d,]*)\s*cft/i));
+    const bricksPcs = parseInt(extractNumber(/Bricks\b.*?(\d[\d,]*)\s*pcs/i));
 
-    const sandCft = parseInt(raw.match(/Sand:?\s*.*?(\d+)\s*cft/i)?.[1] || "0");
-    const sandCost = parseInt(raw.match(/Sand.*?BDT\s*([\d,]+)/i)?.[1].replace(/,/g, "") || "0");
+    // 🌟 ২. টাকার পরিমাণ (BDT) এক্সট্র্যাকশনের জন্য স্মার্ট প্যাটার্ন (Prefix/Suffix দুইটাই হ্যান্ডেল করবে)
+    const cementCost = parseInt(extractNumber(/Cement\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
+    const steelCost = parseInt(extractNumber(/Steel\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
+    const sandCost = parseInt(extractNumber(/Sand\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
+    const bricksCost = parseInt(extractNumber(/Bricks\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
 
-    const bricksPcs = parseInt(raw.match(/Bricks:?\s*.*?([\d,]+)\s*pcs/i)?.[1].replace(/,/g, "") || "0");
-    const bricksCost = parseInt(raw.match(/Bricks.*?BDT\s*([\d,]+)/i)?.[1].replace(/,/g, "") || "0");
+    // লেবার কস্টের ভ্যারিয়েশন হ্যান্ডেলিং
+    const laborCost = parseInt(extractNumber(/(?:Labor|Workforce|Execution)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
 
-    const laborCost = parseInt(raw.match(/(?:Labor\s*Costs?|Labor\s*and\s*Other.*?):?\s*.*?BDT\s*([\d,]+)/i)?.[1].replace(/,/g, "") || "0");
-
-    const totalCost = cementCost + steelCost + sandCost + bricksCost + laborCost;
+    // টোটাল কস্ট ক্যালকুলেশন এবং ফলব্যাক
+    let totalCost = cementCost + steelCost + sandCost + bricksCost + laborCost;
+    if (totalCost === 0) {
+      totalCost = parseInt(extractNumber(/(?:Total|Budget|Final Cost)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
+    }
 
     return {
       materials: [
@@ -87,7 +98,7 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
       laborCost,
       totalCost,
     };
-  }, [project]);
+  }, [project?.aiEstimate]);
 
   const materialData = useMemo(() => {
     return parsedData?.materials.map(m => ({ name: m.name.split(" ")[0], quantity: m.quantity })) || [];
@@ -179,7 +190,7 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <motion.div 
+    <motion.div
       id="explore-print-section"
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
@@ -187,7 +198,7 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
       className="min-h-screen bg-[#020617] text-[#F8FAFC] py-12 px-4 sm:px-6 lg:px-8 print:bg-white print:text-black print:py-4"
     >
       <div className="max-w-5xl mx-auto space-y-8 print:space-y-6">
-        
+
         {/* Back Button */}
         <Link href="/explore" className="inline-flex items-center gap-2 text-slate-400 hover:text-[#10B981] transition-colors group print:hidden">
           <svg className="h-5 w-5 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

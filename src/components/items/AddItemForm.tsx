@@ -31,26 +31,38 @@ export default function AddItemForm({ userId }: { userId: string }) {
   };
 
   // 🧠 Dynamic Markdown Parser Function using useMemo
+  // 🧠 Dynamic Markdown Parser Function using useMemo
   const parsedData = useMemo(() => {
     if (!aiRawEstimate) return null;
 
-    // RegEx patterns to extract quantities and numbers from the markdown string
-    const cementBags = parseInt(aiRawEstimate.match(/Cement:?\s*.*?(\d+)\s*bags/i)?.[1] || "0");
-    const cementCost = parseInt(aiRawEstimate.match(/Cement.*?BDT\s*([\d,]+)/i)?.[1].replace(/,/g, "") || "0");
+    // Helper function to extract just the first numbers package appearing near a keyword
+    const extractNumber = (regex: RegExp, fallback = "0") => {
+      const match = aiRawEstimate.match(regex);
+      return match ? match[1].replace(/,/g, "") : fallback;
+    };
 
-    const steelTons = parseFloat(aiRawEstimate.match(/Steel:?\s*.*?([\d.]+)\s*tons/i)?.[1] || "0");
-    const steelCost = parseInt(aiRawEstimate.match(/Steel.*?BDT\s*([\d,]+)/i)?.[1].replace(/,/g, "") || "0");
+    // 🌟 ১. মেটেরিয়াল পরিমাণের নিখুঁত এক্সট্র্যাকশন
+    const cementBags = parseInt(extractNumber(/Cement\b.*?(\d[\d,]*)\s*bags/i));
+    const steelTons = parseFloat(extractNumber(/Steel\b.*?(\d[\d,.]*)\s*tons/i));
+    const sandCft = parseInt(extractNumber(/Sand\b.*?(\d[\d,]*)\s*cft/i));
+    const bricksPcs = parseInt(extractNumber(/Bricks\b.*?(\d[\d,]*)\s*pcs/i));
 
-    const sandCft = parseInt(aiRawEstimate.match(/Sand:?\s*.*?(\d+)\s*cft/i)?.[1] || "0");
-    const sandCost = parseInt(aiRawEstimate.match(/Sand.*?BDT\s*([\d,]+)/i)?.[1].replace(/,/g, "") || "0");
+    // 🌟 ২. টাকার পরিমাণ (BDT) এক্সট্র্যাকশনের জন্য স্মার্ট প্যাটার্ন
+    // এটি কি-ওয়ার্ডের আশেপাশে থাকা BDT বা সংখ্যার কম্বিনেশন নিখুঁতভাবে বের করবে
+    const cementCost = parseInt(extractNumber(/Cement\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
+    const steelCost = parseInt(extractNumber(/Steel\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
+    const sandCost = parseInt(extractNumber(/Sand\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
+    const bricksCost = parseInt(extractNumber(/Bricks\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
 
-    const bricksPcs = parseInt(aiRawEstimate.match(/Bricks:?\s*.*?([\d,]+)\s*pcs/i)?.[1].replace(/,/g, "") || "0");
-    const bricksCost = parseInt(aiRawEstimate.match(/Bricks.*?BDT\s*([\d,]+)/i)?.[1].replace(/,/g, "") || "0");
+    // লেবার কস্টের ভ্যারিয়েশন হ্যান্ডেলিং
+    const laborCost = parseInt(extractNumber(/(?:Labor|Workforce|Execution)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
 
-    const laborCost = parseInt(aiRawEstimate.match(/(?:Labor\s*Costs?|Labor\s*and\s*Other.*?):?\s*.*?BDT\s*([\d,]+)/i)?.[1].replace(/,/g, "") || "0");
+    // যদি কোনো কারণে মেটেরিয়াল কস্ট আলাদা করে না পাওয়া যায়, তবে Total Estimated Budget লাইন থেকে সরাসরি নেওয়ার ট্রাই করবে
+    let totalCost = cementCost + steelCost + sandCost + bricksCost + laborCost;
 
-    // Total calculation fallback if not matched cleanly
-    const totalCost = cementCost + steelCost + sandCost + bricksCost + laborCost;
+    if (totalCost === 0) {
+      totalCost = parseInt(extractNumber(/(?:Total|Budget|Final Cost)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
+    }
 
     return {
       materials: [
@@ -63,7 +75,6 @@ export default function AddItemForm({ userId }: { userId: string }) {
       totalCost,
     };
   }, [aiRawEstimate]);
-
   // Dynamic Chart Structures based on parsed dynamic data
   const materialData = parsedData?.materials.map(m => ({ name: m.name, quantity: m.quantity })) || [];
 
