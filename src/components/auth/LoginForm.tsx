@@ -131,7 +131,7 @@ export default function LoginForm() {
           <div>
             <div className="flex justify-between items-center">
               <label className="text-xs font-medium text-[#F8FAFC]/80">Password</label>
-              <Link href="/forgot-password" className="text-[11px] text-[#38BDF8] hover:underline">
+              <Link href="/register" className="text-[11px] text-[#38BDF8] hover:underline">
                 Forgot password?
               </Link>
             </div>
