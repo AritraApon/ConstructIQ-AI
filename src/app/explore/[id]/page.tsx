@@ -60,30 +60,27 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
 
     const raw = project.aiEstimate;
 
-    // 🛠️ FIX 1: এখানে match[1] এর পর নিরাপদ Optional Chaining (?.) এবং কন্ডিশনাল চেক যোগ করা হয়েছে
     const extractNumber = (regex: RegExp, fallback = "0") => {
       const match = raw.match(regex);
       return match && match[1] ? match[1].replace(/,/g, "") : fallback;
     };
 
-    // 🌟 ১. মেটেরিয়াল পরিমাণের নিখুঁত এক্সট্র্যাকশন উইথ Fallback (FIX 2: NaN প্রোটেকশন)
+    // 🌟 ১. মেটেরিয়াল পরিমাণের নিখুঁত এক্সট্র্যাকশন উইথ Fallback
     const cementBags = parseInt(extractNumber(/Cement\b.*?(\d[\d,]*)\s*bags/i)) || 500;
     const steelTons = parseFloat(extractNumber(/Steel\b.*?(\d[\d,.]*)\s*tons/i)) || 5.4;
     const sandCft = parseInt(extractNumber(/Sand\b.*?(\d[\d,]*)\s*cft/i)) || 1200;
-    const bricksPcs = parseInt(extractNumber(/Bricks\b.*?(\d[\d,]*)\s*pcs/i)) ||1500;
+    const bricksPcs = parseInt(extractNumber(/Bricks\b.*?(\d[\d,]*)\s*pcs/i)) || 1500;
 
-    // 🌟 ২. টাকার পরিমাণ (BDT) এক্সট্র্যাকশনের জন্য স্মার্ট প্যাটার্ন (Prefix/Suffix দুইটাই হ্যান্ডেল করবে)
-    const cementCost = parseInt(extractNumber(/Cement\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 450;
-    const steelCost = parseInt(extractNumber(/Steel\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 70000;
-    const sandCost = parseInt(extractNumber(/Sand\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 40;
-    const bricksCost = parseInt(extractNumber(/Bricks\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 20;
+    // 🌟 ২. টাকার পরিমাণ (BDT) এক্সট্র্যাকশনের জন্য স্মার্ট প্যাটার্ন
+    const cementCost = parseInt(extractNumber(/Cement\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || (cementBags * 550);
+    const steelCost = parseInt(extractNumber(/Steel\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || (steelTons * 95000);
+    const sandCost = parseInt(extractNumber(/Sand\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || (sandCft * 50);
+    const bricksCost = parseInt(extractNumber(/Bricks\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || (bricksPcs * 12);
 
-    // লেবার কস্টের ভ্যারিয়েশন হ্যান্ডেলিং
-    const laborCost = parseInt(extractNumber(/(?:Labor|Workforce|Execution)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 40000;
+    const laborCost = parseInt(extractNumber(/(?:Labor|Workforce|Execution)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || (project.area * 250);
 
-    // টোটাল কস্ট ক্যালকুলেশন এবং ফলব্যাক
     let totalCost = cementCost + steelCost + sandCost + bricksCost + laborCost;
-    if (totalCost === 0) {
+    if (totalCost === 0 || totalCost === laborCost) {
       totalCost = parseInt(extractNumber(/(?:Total|Budget|Final Cost)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 965465;
     }
 
@@ -97,7 +94,7 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
       laborCost,
       totalCost,
     };
-  }, [project?.aiEstimate]);
+  }, [project]);
 
   const materialData = useMemo(() => {
     return parsedData?.materials.map(m => ({ name: m.name.split(" ")[0], quantity: m.quantity })) || [];
@@ -122,10 +119,8 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
       year: "numeric",
     });
 
-    // Inject a scoped print stylesheet that isolates only the report section
     const styleEl = document.createElement("style");
     styleEl.id = "__pdf-explore-override";
-    // 🛠️ FIX 3: প্রিন্ট হেডার কন্টেন্টের এস্কেপ সিকোয়েন্স এবং কোটেশন ঠিক করা হয়েছে
     styleEl.innerHTML = `
       @media print {
         body > * { display: none !important; }
@@ -153,13 +148,11 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
     `;
     document.head.appendChild(styleEl);
 
-    // Set a descriptive title as the default PDF filename hint for browsers
     const prevTitle = document.title;
     document.title = `ConstructIQ \u2014 ${projectTitle} \u2014 Report (${dateStr})`;
 
     window.print();
 
-    // Restore everything after the print dialog closes
     document.title = prevTitle;
     document.head.removeChild(styleEl);
   };
@@ -232,7 +225,7 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        {/* Dynamic Warning disclaimer: AI Created Data Info */}
+        {/* Dynamic Warning disclaimer */}
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex gap-3 text-slate-300 print:bg-slate-100 print:border-slate-300 print:text-slate-700">
           <span className="text-xl flex-shrink-0 text-amber-500 print:text-slate-800">💡</span>
           <div className="text-xs sm:text-sm">
@@ -240,6 +233,26 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
             <p>This layout and data represent an AI-generated structural blueprint design intended for concept verification. Use this estimation to guide early planning phases; refer to the structured details below for custom-scale parameters.</p>
           </div>
         </div>
+
+        {/* 🌟 🆕 NEW ADDITION: AI Raw Generated Analysis Report Card */}
+        {project.aiEstimate && (
+          <div className="bg-[#0F172A] border border-slate-800/80 p-6 rounded-2xl shadow-xl space-y-4 print:bg-white print:border-slate-300 print:shadow-none">
+            <div className="flex justify-between items-center border-b border-slate-800/60 pb-3 print:border-slate-300">
+              <div>
+                <h4 className="text-lg font-bold text-[#10B981] print:text-emerald-600">AI Raw Generated Analysis Report</h4>
+                <p className="text-xs text-slate-400 print:text-slate-500">Direct structural blueprint breakdown from the LLM engine</p>
+              </div>
+              <span className="text-xs font-mono font-bold bg-[#38BDF8]/15 text-[#38BDF8] border border-[#38BDF8]/30 px-3 py-1 rounded-full uppercase tracking-wider print:border-slate-300 print:text-slate-700">
+                Live Stream Text
+              </span>
+            </div>
+
+            {/* Clean Markdown Styling Container */}
+            <div className="text-slate-300 print:text-black text-sm leading-relaxed space-y-2 whitespace-pre-line font-normal tracking-wide max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-800 print:max-h-none print:overflow-visible">
+              {project.aiEstimate}
+            </div>
+          </div>
+        )}
 
         {/* Visual Analytics */}
         {parsedData && parsedData.totalCost > 0 && (
