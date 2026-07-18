@@ -1,36 +1,241 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏗️ ConstructIQ AI
 
-## Getting Started
+> **AI-Powered Construction Planning Assistant**
 
-First, run the development server:
+Plan smarter. Estimate faster. Build better.
+
+![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-blue?logo=typescript)
+![MongoDB](https://img.shields.io/badge/MongoDB-green?logo=mongodb)
+![BetterAuth](https://img.shields.io/badge/BetterAuth-Authentication-orange)
+![Groq AI](https://img.shields.io/badge/Groq-AI-purple)
+
+
+---
+# 📖 About
+
+ConstructIQ AI is an AI-powered web application designed to simplify construction planning. Users can generate intelligent construction estimates, manage their saved projects, and receive instant construction guidance through an AI assistant.
+
+The application combines modern web technologies with AI to make preliminary planning faster, smarter, and more accessible for students, contractors, and homeowners.
+
+---
+
+## 🌐 Live Demo
+
+### 🚀 Live Website
+
+https://construct-iq-ai.vercel.app
+
+### ⚡ Backend API
+
+https://construct-iq-ai-server.vercel.app
+
+
+---
+
+## 📸 Screenshots
+
+| Home | Explore |
+|------|---------|
+| ![](https://i.ibb.co.com/jkPMvJK7/image.png) | ![](https://i.ibb.co.com/zTHZhjmG/image.png) |
+
+| Create Estimate | AI Chat |
+|------|---------|
+| ![](https://i.ibb.co.com/DDbfqwnP/image.png) | ![](https://i.ibb.co.com/8DNgKNdb/image.png) |
+
+| Manage Estimates |
+|------|
+| ![](https://i.ibb.co.com/prXTjRN8/image.png) |
+
+---
+
+
+
+
+# ✨ Features
+
+## 🤖 AI Construction Estimate
+
+- Generate construction estimates using AI
+- Material suggestions
+- Cost estimation
+- Construction recommendations
+- Safety notes
+
+---
+
+## 💬 AI Construction Assistant
+
+- Ask construction-related questions
+- Smart AI responses powered by Groq
+- Floating chatbot available across the application
+
+---
+
+## 📂 Project Management
+
+- Create Estimate
+- View Saved Estimates
+- Delete Estimates
+- Project Details Page
+
+---
+
+## 🔎 Explore Projects
+
+- Search Projects
+- Filter by Building Type
+- Responsive Project Cards
+
+## 🔐 Authentication
+
+- Better Auth
+- Email & Password Login
+- Secure Session Authentication
+
+---
+
+# 🖥 Pages
+
+- 🏠 Home
+- 🔍 Explore
+- 🤖 Create Estimate
+- 📁 Manage Estimates
+- ℹ️ About
+- 📞 Support
+- 👤 Profile
+
+---
+
+# 🛠 Tech Stack
+
+### Frontend
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- React Toastify
+- Recharts
+
+### Backend
+
+- Express.js
+- TypeScript
+- MongoDB
+- Mongoose
+- Better Auth
+- Groq AI
+
+---
+
+# 🚀 Installation
+
+Clone the repository
+
+```bash
+git clone https://github.com/AritraApon/ConstructIQ-AI.git
+```
+
+Move to project
+
+```bash
+cd ConstructIQ-AI
+```
+
+Install dependencies
+
+```bash
+npm install
+```
+
+Run development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# 🔑 Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Client
 
-## Learn More
+```env
+NEXT_PUBLIC_API_URL=
+NEXT_PUBLIC_BASE_URL=
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Server
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+PORT=
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+MONGODB_URI=
 
-## Deploy on Vercel
+GROQ_API_KEY=
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# 🤖 AI Features
+
+### AI Estimate
+
+Generates
+
+- Material List
+- Cost Breakdown
+- Construction Suggestions
+- Safety Notes
+
+---
+
+### AI Assistant
+
+Can answer questions about
+
+- Building Materials
+- RCC
+- Foundation
+- Construction Cost
+- Planning
+- Safety
+
+---
+
+# 🎯 Target Users
+
+- Civil Engineering Students
+- House Owners
+- Small Contractors
+- Freelance Engineers
+
+---
+
+# 📱 Responsive Design
+
+- Desktop
+- Tablet
+- Mobile
+
+---
+
+# 👨‍💻 Developer
+
+### Aritro Mazumdar
+
+GitHub
+https://github.com/AritraApon
+
+Portfolio:
+https://protfolio-page-one.vercel.app/
+
+LinkedIn:
+https://www.linkedin.com/in/aritro-mazumdar-011206apon
+
+---
+
+# ⭐ If you like this project
+
+Give this repository a ⭐ on GitHub.
