@@ -31,33 +31,31 @@ export default function AddItemForm({ userId }: { userId: string }) {
   };
 
   // 🧠 Dynamic Markdown Parser Function using useMemo
-  // 🧠 Dynamic Markdown Parser Function using useMemo
   const parsedData = useMemo(() => {
     if (!aiRawEstimate) return null;
 
-    // Helper function to extract just the first numbers package appearing near a keyword
+    // 🛠️ FIX: এখানে match[1] এর পর নিরাপদ Optional Chaining (?.) যোগ করা হয়েছে
     const extractNumber = (regex: RegExp, fallback = "0") => {
       const match = aiRawEstimate.match(regex);
-      return match ? match[1].replace(/,/g, "") : fallback;
+      return match && match[1] ? match[1].replace(/,/g, "") : fallback;
     };
 
-    // 🌟 ১. মেটেরিয়াল পরিমাণের নিখুঁত এক্সট্র্যাকশন
-    const cementBags = parseInt(extractNumber(/Cement\b.*?(\d[\d,]*)\s*bags/i));
-    const steelTons = parseFloat(extractNumber(/Steel\b.*?(\d[\d,.]*)\s*tons/i));
-    const sandCft = parseInt(extractNumber(/Sand\b.*?(\d[\d,]*)\s*cft/i));
-    const bricksPcs = parseInt(extractNumber(/Bricks\b.*?(\d[\d,]*)\s*pcs/i));
+    // 🌟 ১. মেটেরিয়াল পরিমাণের নিখুঁত এক্সট্র্যাকশন
+    const cementBags = parseInt(extractNumber(/Cement\b.*?(\d[\d,]*)\s*bags/i)) || 0;
+    const steelTons = parseFloat(extractNumber(/Steel\b.*?(\d[\d,.]*)\s*tons/i)) || 0;
+    const sandCft = parseInt(extractNumber(/Sand\b.*?(\d[\d,]*)\s*cft/i)) || 0;
+    const bricksPcs = parseInt(extractNumber(/Bricks\b.*?(\d[\d,]*)\s*pcs/i)) || 0;
 
     // 🌟 ২. টাকার পরিমাণ (BDT) এক্সট্র্যাকশনের জন্য স্মার্ট প্যাটার্ন
-    // এটি কি-ওয়ার্ডের আশেপাশে থাকা BDT বা সংখ্যার কম্বিনেশন নিখুঁতভাবে বের করবে
     const cementCost = parseInt(extractNumber(/Cement\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
     const steelCost = parseInt(extractNumber(/Steel\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
     const sandCost = parseInt(extractNumber(/Sand\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
     const bricksCost = parseInt(extractNumber(/Bricks\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
 
-    // লেবার কস্টের ভ্যারিয়েশন হ্যান্ডেলিং
+    // লেবার কস্টের ভ্যারিয়েশন হ্যান্ডেলিং
     const laborCost = parseInt(extractNumber(/(?:Labor|Workforce|Execution)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
 
-    // যদি কোনো কারণে মেটেরিয়াল কস্ট আলাদা করে না পাওয়া যায়, তবে Total Estimated Budget লাইন থেকে সরাসরি নেওয়ার ট্রাই করবে
+    // যদি কোনো কারণে মেটেরিয়াল কস্ট আলাদা করে না পাওয়া যায়, তবে Total Estimated Budget লাইন থেকে সরাসরি নেওয়ার ট্রাই করবে
     let totalCost = cementCost + steelCost + sandCost + bricksCost + laborCost;
 
     if (totalCost === 0) {
@@ -75,6 +73,7 @@ export default function AddItemForm({ userId }: { userId: string }) {
       totalCost,
     };
   }, [aiRawEstimate]);
+
   // Dynamic Chart Structures based on parsed dynamic data
   const materialData = parsedData?.materials.map(m => ({ name: m.name, quantity: m.quantity })) || [];
 
@@ -121,10 +120,6 @@ export default function AddItemForm({ userId }: { userId: string }) {
   };
 
   // ─── PDF Download Handler ─────────────────────────────────────────────────
-  // Uses a scoped window.print() approach:
-  //   1. Injects a temporary <style> that hides everything except #estimate-print-section
-  //   2. Sets the document title (used by browsers as the default PDF file name)
-  //   3. Calls window.print(), then cleans up after the dialog closes
   const handleDownloadPDF = () => {
     const projectLabel = formData.title.trim() || "Estimate";
     const dateStr = new Date().toLocaleDateString("en-GB", {
@@ -150,7 +145,7 @@ export default function AddItemForm({ userId }: { userId: string }) {
         }
         /* Print header injected via ::before */
         #estimate-print-section::before {
-          content: "ConstructIQ AI — Cost Estimate Report\A ${projectLabel}  •  ${dateStr}";
+          content: "ConstructIQ AI — Cost Estimate Report\\A ${projectLabel}  •  ${dateStr}";
           white-space: pre;
           display: block;
           font-size: 14pt;
@@ -164,13 +159,11 @@ export default function AddItemForm({ userId }: { userId: string }) {
     `;
     document.head.appendChild(styleEl);
 
-    // Temporarily update title for the PDF filename hint
     const prevTitle = document.title;
     document.title = `ConstructIQ — ${projectLabel} — Estimate (${dateStr})`;
 
     window.print();
 
-    // Restore state after print dialog closes
     document.title = prevTitle;
     document.head.removeChild(styleEl);
   };

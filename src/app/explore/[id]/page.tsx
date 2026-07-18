@@ -54,38 +54,37 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
     }
   }, [id]);
 
-  // Parse AI markdown estimate for material and cost data
- // 🧠 Smart Markdown Parser for AI Estimates
+  // 🧠 Smart Markdown Parser for AI Estimates
   const parsedData = useMemo(() => {
     if (!project?.aiEstimate) return null;
 
     const raw = project.aiEstimate;
 
-    // Helper function to extract numbers securely near keywords
+    // 🛠️ FIX 1: এখানে match[1] এর পর নিরাপদ Optional Chaining (?.) এবং কন্ডিশনাল চেক যোগ করা হয়েছে
     const extractNumber = (regex: RegExp, fallback = "0") => {
       const match = raw.match(regex);
-      return match ? match[1].replace(/,/g, "") : fallback;
+      return match && match[1] ? match[1].replace(/,/g, "") : fallback;
     };
 
-    // 🌟 ১. মেটেরিয়াল পরিমাণের নিখুঁত এক্সট্র্যাকশন
-    const cementBags = parseInt(extractNumber(/Cement\b.*?(\d[\d,]*)\s*bags/i));
-    const steelTons = parseFloat(extractNumber(/Steel\b.*?(\d[\d,.]*)\s*tons/i));
-    const sandCft = parseInt(extractNumber(/Sand\b.*?(\d[\d,]*)\s*cft/i));
-    const bricksPcs = parseInt(extractNumber(/Bricks\b.*?(\d[\d,]*)\s*pcs/i));
+    // 🌟 ১. মেটেরিয়াল পরিমাণের নিখুঁত এক্সট্র্যাকশন উইথ Fallback (FIX 2: NaN প্রোটেকশন)
+    const cementBags = parseInt(extractNumber(/Cement\b.*?(\d[\d,]*)\s*bags/i)) || 0;
+    const steelTons = parseFloat(extractNumber(/Steel\b.*?(\d[\d,.]*)\s*tons/i)) || 0;
+    const sandCft = parseInt(extractNumber(/Sand\b.*?(\d[\d,]*)\s*cft/i)) || 0;
+    const bricksPcs = parseInt(extractNumber(/Bricks\b.*?(\d[\d,]*)\s*pcs/i)) || 0;
 
     // 🌟 ২. টাকার পরিমাণ (BDT) এক্সট্র্যাকশনের জন্য স্মার্ট প্যাটার্ন (Prefix/Suffix দুইটাই হ্যান্ডেল করবে)
-    const cementCost = parseInt(extractNumber(/Cement\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
-    const steelCost = parseInt(extractNumber(/Steel\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
-    const sandCost = parseInt(extractNumber(/Sand\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
-    const bricksCost = parseInt(extractNumber(/Bricks\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
+    const cementCost = parseInt(extractNumber(/Cement\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 0;
+    const steelCost = parseInt(extractNumber(/Steel\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 0;
+    const sandCost = parseInt(extractNumber(/Sand\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 0;
+    const bricksCost = parseInt(extractNumber(/Bricks\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 0;
 
-    // লেবার কস্টের ভ্যারিয়েশন হ্যান্ডেলিং
-    const laborCost = parseInt(extractNumber(/(?:Labor|Workforce|Execution)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
+    // লেবার কস্টের ভ্যারিয়েশন হ্যান্ডেলিং
+    const laborCost = parseInt(extractNumber(/(?:Labor|Workforce|Execution)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 0;
 
     // টোটাল কস্ট ক্যালকুলেশন এবং ফলব্যাক
     let totalCost = cementCost + steelCost + sandCost + bricksCost + laborCost;
     if (totalCost === 0) {
-      totalCost = parseInt(extractNumber(/(?:Total|Budget|Final Cost)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0");
+      totalCost = parseInt(extractNumber(/(?:Total|Budget|Final Cost)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 0;
     }
 
     return {
@@ -126,6 +125,7 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
     // Inject a scoped print stylesheet that isolates only the report section
     const styleEl = document.createElement("style");
     styleEl.id = "__pdf-explore-override";
+    // 🛠️ FIX 3: প্রিন্ট হেডার কন্টেন্টের এস্কেপ সিকোয়েন্স এবং কোটেশন ঠিক করা হয়েছে
     styleEl.innerHTML = `
       @media print {
         body > * { display: none !important; }
@@ -139,7 +139,8 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
           visibility: visible !important;
         }
         #explore-print-section::before {
-          content: "ConstructIQ AI Report";
+          content: "ConstructIQ AI — Cost Estimate Report\\A ${projectTitle}  •  ${dateStr}";
+          white-space: pre;
           display: block;
           font-size: 14pt;
           font-weight: 700;
