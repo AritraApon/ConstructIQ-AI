@@ -54,34 +54,93 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
     }
   }, [id]);
 
-  // 🧠 Smart Markdown Parser for AI Estimates
+// 🧠 Multi-Format Structural Blueprint Parser (Handles Rangpur, Dhaka & mixed Markdown patterns)
   const parsedData = useMemo(() => {
     if (!project?.aiEstimate) return null;
 
     const raw = project.aiEstimate;
+    const lines = raw.split("\n");
 
-    const extractNumber = (regex: RegExp, fallback = "0") => {
-      const match = raw.match(regex);
-      return match && match[1] ? match[1].replace(/,/g, "") : fallback;
+    // ফলব্যাক ডিফোল্ট ভ্যালু (যদি কোনো কিছু এক্সট্র্যাক্ট করা না যায়)
+    let cementBags = 500, cementCost = 275000;
+    let steelTons = 5.4, steelCost = 513000;
+    let sandCft = 1200, sandCost = 66000;
+    let bricksPcs = 15000, bricksCost = 180000;
+    let laborCost = Math.round((project.area || 1000) * 250);
+    let totalCost = 0;
+
+    // একটি লাইন থেকে ক্রমানুসারে সব সংখ্যা বের করার হেল্পার
+    const extractNumbers = (text: string): number[] => {
+      const matches = text.match(/[\d,.]+/g);
+      if (!matches) return [];
+      return matches.map(m => parseFloat(m.replace(/,/g, "")) || 0).filter(n => n > 0);
     };
 
-    // 🌟 ১. মেটেরিয়াল পরিমাণের নিখুঁত এক্সট্র্যাকশন উইথ Fallback
-    const cementBags = parseInt(extractNumber(/Cement\b.*?(\d[\d,]*)\s*bags/i)) || 500;
-    const steelTons = parseFloat(extractNumber(/Steel\b.*?(\d[\d,.]*)\s*tons/i)) || 5.4;
-    const sandCft = parseInt(extractNumber(/Sand\b.*?(\d[\d,]*)\s*cft/i)) || 1200;
-    const bricksPcs = parseInt(extractNumber(/Bricks\b.*?(\d[\d,]*)\s*pcs/i)) || 1500;
+    // ১ম পাস: শুধুমাত্র টোটাল পরিমাণ (Total Quantity) খোঁজা
+    lines.forEach((line) => {
+      const lowerLine = line.toLowerCase();
+      const nums = extractNumbers(line);
+      if (nums.length === 0) return;
 
-    // 🌟 ২. টাকার পরিমাণ (BDT) এক্সট্র্যাকশনের জন্য স্মার্ট প্যাটার্ন
-    const cementCost = parseInt(extractNumber(/Cement\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || (cementBags * 550);
-    const steelCost = parseInt(extractNumber(/Steel\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || (steelTons * 95000);
-    const sandCost = parseInt(extractNumber(/Sand\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || (sandCft * 50);
-    const bricksCost = parseInt(extractNumber(/Bricks\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || (bricksPcs * 12);
+      // সাব-ক্যালকুলেশন বা ব্রেকডাউন লাইনগুলো স্কিপ করতে (যা টোটাল নয়)
+      const isBreakdown = lowerLine.includes("foundation") || lowerLine.includes("slab") || lowerLine.includes("column") || lowerLine.includes("beam") || lowerLine.includes("wall") || lowerLine.includes("floor") || lowerLine.includes("roof");
 
-    const laborCost = parseInt(extractNumber(/(?:Labor|Workforce|Execution)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || (project.area * 250);
+      if (!isBreakdown) {
+        if (lowerLine.includes("cement") && lowerLine.includes("bag")) {
+          // লাইনের ১ম সংখ্যাটাই কোয়ান্টিটি
+          cementBags = Math.round(nums[0]);
+        }
+        else if (lowerLine.includes("steel") && (lowerLine.includes("ton") || lowerLine.includes("kg"))) {
+          steelTons = nums[0];
+        }
+        else if (lowerLine.includes("sand") && lowerLine.includes("cft")) {
+          sandCft = Math.round(nums[0]);
+        }
+        else if (lowerLine.includes("brick") && (lowerLine.includes("pc") || lowerLine.includes("piece"))) {
+          bricksPcs = Math.round(nums[0]);
+        }
+      }
+    });
 
-    let totalCost = cementCost + steelCost + sandCost + bricksCost + laborCost;
-    if (totalCost === 0 || totalCost === laborCost) {
-      totalCost = parseInt(extractNumber(/(?:Total|Budget|Final Cost)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 965465;
+    // ২য় পাস: শুধুমাত্র খরচ (Costs) এবং ফাইনাল বাজেট খোঁজা
+    lines.forEach((line) => {
+      const lowerLine = line.toLowerCase();
+      const nums = extractNumbers(line);
+      if (nums.length === 0) return;
+
+      // কস্ট বা বিডিটি লাইনে একাধিক সংখ্যা থাকলে (যেমন: 420 bags x 420 BDT = 176400) শেষ সংখ্যাটিই বড় এবং আসল দাম
+      const possibleCost = nums.length >= 1 ? Math.max(...nums) : 0;
+
+      if (lowerLine.includes("cement") && (lowerLine.includes("cost") || lowerLine.includes("bdt") || lowerLine.includes("taka"))) {
+        if (possibleCost > 1000) cementCost = Math.round(possibleCost);
+      }
+      else if (lowerLine.includes("steel") && (lowerLine.includes("cost") || lowerLine.includes("bdt") || lowerLine.includes("taka"))) {
+        if (possibleCost > 1000) steelCost = Math.round(possibleCost);
+      }
+      else if (lowerLine.includes("sand") && (lowerLine.includes("cost") || lowerLine.includes("bdt") || lowerLine.includes("taka"))) {
+        if (possibleCost > 100) sandCost = Math.round(possibleCost);
+      }
+      else if (lowerLine.includes("brick") && (lowerLine.includes("cost") || lowerLine.includes("bdt") || lowerLine.includes("taka"))) {
+        if (possibleCost > 1000) bricksCost = Math.round(possibleCost);
+      }
+      else if (lowerLine.includes("labor") && (lowerLine.includes("cost") || lowerLine.includes("bdt") || lowerLine.includes("taka"))) {
+        if (possibleCost > 1000) laborCost = Math.round(possibleCost);
+      }
+      else if (
+        (lowerLine.includes("total") || lowerLine.includes("budget") || lowerLine.includes("final")) &&
+        (lowerLine.includes("bdt") || lowerLine.includes("taka") || lowerLine.includes("estimate"))
+      ) {
+        if (possibleCost > 50000) totalCost = Math.round(possibleCost);
+      }
+    });
+
+    // ৩য় পাস: যদি AI আলাদা করে টোটাল বা লেবার ফিগার ফিক্স না করে, লজিক্যাল ব্যালেন্স করা
+    const materialsSum = cementCost + steelCost + sandCost + bricksCost;
+    if (totalCost === 0) {
+      totalCost = materialsSum + laborCost;
+    } else if (laborCost === Math.round((project.area || 1000) * 250) && totalCost > materialsSum) {
+      // যদি AI নিজেই টোটাল কস্ট দিয়ে দেয়, তবে লেবার কস্ট হবে অবশিষ্টাংশ
+      laborCost = totalCost - materialsSum;
     }
 
     return {

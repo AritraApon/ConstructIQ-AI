@@ -30,31 +30,101 @@ export default function AddItemForm({ userId }: { userId: string }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 🧠 Dynamic Markdown Parser Function using useMemo
+// 🧠 Ultra-Stable Multi-Format Dynamic Markdown Parser for Construction Estimates
   const parsedData = useMemo(() => {
     if (!aiRawEstimate) return null;
 
-    const extractNumber = (regex: RegExp, fallback = "0") => {
-      const match = aiRawEstimate.match(regex);
-      return match && match[1] ? match[1].replace(/,/g, "") : fallback;
+    const lines = aiRawEstimate.split("\n");
+
+    // ১. স্ট্যাটিক ফলব্যাক ভ্যালু (যদি কোনো কিছুই টেক্সট থেকে এক্সট্র্যাক্ট করা না যায়)
+    let cementBags = 500, cementCost = 275000;
+    let steelTons = 5.4, steelCost = 513000;
+    let sandCft = 1200, sandCost = 66000;
+    let bricksPcs = 15000, bricksCost = 180000;
+    let laborCost = 350000; // স্ট্যান্ডার্ড লেবার কস্ট ফলব্যাক
+    let totalCost = 0;
+
+    // একটি লাইন থেকে ক্রমানুসারে সব সংখ্যা বের করার হেল্পার ফাংশন
+    const extractNumbers = (text: string): number[] => {
+      const matches = text.match(/[\d,.]+/g);
+      if (!matches) return [];
+      // কমা বাদ দিয়ে পিওর ফ্লোট নম্বরে কনভার্ট করা এবং ০ বা নেগেটিভ ভ্যালু ফিল্টার করা
+      return matches
+        .map(m => parseFloat(m.replace(/,/g, "")) || 0)
+        .filter(n => n > 0);
     };
 
-    const cementBags = parseInt(extractNumber(/Cement\b.*?(\d[\d,]*)\s*bags/i)) || 500;
-    const steelTons = parseFloat(extractNumber(/Steel\b.*?(\d[\d,.]*)\s*tons/i)) || 5.0;
-    const sandCft = parseInt(extractNumber(/Sand\b.*?(\d[\d,]*)\s*cft/i)) || 1500;
-    const bricksPcs = parseInt(extractNumber(/Bricks\b.*?(\d[\d,]*)\s*pcs/i)) || 1200;
+    // 🚀 ১ম পাস: শুধুমাত্র টোটাল পরিমাণ (Total Quantity) খোঁজা (ব্রেকডাউন লাইনগুলো স্কিপ করে)
+    lines.forEach((line) => {
+      const lowerLine = line.toLowerCase();
+      const nums = extractNumbers(line);
+      if (nums.length === 0) return;
 
-    const cementCost = parseInt(extractNumber(/Cement\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 450;
-    const steelCost = parseInt(extractNumber(/Steel\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 1000;
-    const sandCost = parseInt(extractNumber(/Sand\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 100;
-    const bricksCost = parseInt(extractNumber(/Bricks\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 100;
+      // ফাউন্ডেশন, স্ল্যাব, ফ্লোর ইত্যাদির ব্রেকডাউন লাইনগুলো স্কিপ করার জন্য সেফটি গার্ড
+      const isBreakdown =
+        lowerLine.includes("foundation") ||
+        lowerLine.includes("slab") ||
+        lowerLine.includes("column") ||
+        lowerLine.includes("beam") ||
+        lowerLine.includes("wall") ||
+        lowerLine.includes("floor") ||
+        lowerLine.includes("roof") ||
+        lowerLine.includes("partition");
 
-    const laborCost = parseInt(extractNumber(/(?:Labor|Workforce|Execution)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0")  || 1000;
+      if (!isBreakdown) {
+        if (lowerLine.includes("cement") && lowerLine.includes("bag")) {
+          cementBags = Math.round(nums[0]);
+        }
+        else if (lowerLine.includes("steel") && (lowerLine.includes("ton") || lowerLine.includes("kg"))) {
+          steelTons = nums[0];
+        }
+        else if (lowerLine.includes("sand") && lowerLine.includes("cft")) {
+          sandCft = Math.round(nums[0]);
+        }
+        else if (lowerLine.includes("brick") && (lowerLine.includes("pc") || lowerLine.includes("piece"))) {
+          bricksPcs = Math.round(nums[0]);
+        }
+      }
+    });
 
-    let totalCost = cementCost + steelCost + sandCost + bricksCost + laborCost;
+    // 🚀 ২য় পাস: খরচ (Costs) এবং ফাইনাল বাজেট স্ক্যান করা
+    lines.forEach((line) => {
+      const lowerLine = line.toLowerCase();
+      const nums = extractNumbers(line);
+      if (nums.length === 0) return;
 
+      // ক্যালকুলেশন লাইনে (যেমন: 420 x 420 = 176400) সবচেয়ে বড় সংখ্যাটাই সাধারণত ফাইনাল কস্ট হয়
+      const possibleCost = Math.max(...nums);
+
+      if (lowerLine.includes("cement") && (lowerLine.includes("cost") || lowerLine.includes("bdt") || lowerLine.includes("taka"))) {
+        if (possibleCost > 1000) cementCost = Math.round(possibleCost);
+      }
+      else if (lowerLine.includes("steel") && (lowerLine.includes("cost") || lowerLine.includes("bdt") || lowerLine.includes("taka"))) {
+        if (possibleCost > 1000) steelCost = Math.round(possibleCost);
+      }
+      else if (lowerLine.includes("sand") && (lowerLine.includes("cost") || lowerLine.includes("bdt") || lowerLine.includes("taka"))) {
+        if (possibleCost > 100) sandCost = Math.round(possibleCost);
+      }
+      else if (lowerLine.includes("brick") && (lowerLine.includes("cost") || lowerLine.includes("bdt") || lowerLine.includes("taka"))) {
+        if (possibleCost > 1000) bricksCost = Math.round(possibleCost);
+      }
+      else if ((lowerLine.includes("labor") || lowerLine.includes("workforce")) && (lowerLine.includes("cost") || lowerLine.includes("bdt") || lowerLine.includes("taka"))) {
+        if (possibleCost > 1000) laborCost = Math.round(possibleCost);
+      }
+      else if (
+        (lowerLine.includes("total") || lowerLine.includes("budget") || lowerLine.includes("final")) &&
+        (lowerLine.includes("bdt") || lowerLine.includes("taka") || lowerLine.includes("estimate") || lowerLine.includes("cost"))
+      ) {
+        if (possibleCost > 50000) totalCost = Math.round(possibleCost);
+      }
+    });
+
+    // 🚀 ৩য় পাস: লজিক্যাল ব্যালেন্সিং এবং সেফটি ফিক্স
+    const materialsSum = cementCost + steelCost + sandCost + bricksCost;
+
+    // যদি AI টোটাল কস্ট আলাদা করে জেনারেট না করে, তাহলে সব খরচের যোগফলই হবে টোটাল
     if (totalCost === 0) {
-      totalCost = parseInt(extractNumber(/(?:Total|Budget|Final Cost)\b.*?(?:BDT\s*([\d,]+)|([\d,]+)\s*BDT)/i) || "0") || 10000;
+      totalCost = materialsSum + laborCost;
     }
 
     return {
