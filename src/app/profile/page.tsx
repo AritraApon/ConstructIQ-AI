@@ -16,7 +16,7 @@ export default function ProfilePage() {
 
   // মোডাল ফর্ম স্টেট
   const [newName, setNewName] = useState("");
-  const [imageFile, setImageFile] = useState(null);
+ const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -30,7 +30,7 @@ export default function ProfilePage() {
         try {
           const response = await getProjects();
           if (response?.success && Array.isArray(response.data)) {
-            const myCount = response.data.filter((p) => p.userId === session.user.id).length;
+            const myCount = response.data.filter((p : {userId: string}) => p.userId === session.user.id).length;
             setProjectCount(myCount);
           }
         } catch (err) {
@@ -41,16 +41,16 @@ export default function ProfilePage() {
     }
   }, [session]);
 
-  // Imgbb-তে ছবি আপলোড করার লজিক
-  const handleImageChange = (e) => {
+
+  const handleImageChange = (e : React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setImageFile(file);
-      setImagePreview(URL.createObjectURL(file)); // লোকাল প্রিভিউ
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
-  const uploadToImgbb = async (file) => {
+  const uploadToImgbb = async (file : File) => {
     const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
     if (!apiKey) {
       toast.error("Imgbb API Key missing in environment variables!");
@@ -77,7 +77,7 @@ export default function ProfilePage() {
   };
 
   // প্রোফাইল আপডেট (Better Auth - updateUser মেথড দিয়ে)
-  const handleProfileUpdate = async (e) => {
+  const handleProfileUpdate = async (e : React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return toast.error("Identity Name fields cannot be empty!");
 

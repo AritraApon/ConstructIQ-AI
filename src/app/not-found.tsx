@@ -1,10 +1,11 @@
 import Link from "next/link";
-
+export const dynamic = "force-dynamic";
 export default function NotFound() {
   return (
     <div className="min-h-[80vh] w-full flex flex-col items-center justify-center px-6 relative overflow-hidden">
-      
+
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-[#10B981]/5 to-[#38BDF8]/5 blur-[120px] rounded-full pointer-events-none" />
+
 
       <div className="relative z-10 max-w-md w-full text-center border border-slate-800/80 bg-[#0F172A]/40 backdrop-blur-xl p-8 rounded-2xl shadow-[0_0_50px_rgba(2,6,23,0.5)]">
 
@@ -33,7 +34,7 @@ export default function NotFound() {
           The structural coordinate or item profile path you are attempting to audit does not exist in our dataset pipeline.
         </p>
 
-        {
+
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href="/"

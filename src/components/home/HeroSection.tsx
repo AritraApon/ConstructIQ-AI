@@ -19,7 +19,7 @@ const containerVariants = {
   visible: {
     transition: { staggerChildren: 0.18, delayChildren: 0.3 },
   },
-};
+} as const;
 
 const itemVariants = {
   hidden: { opacity: 0, y: 32 },
@@ -28,7 +28,7 @@ const itemVariants = {
     y: 0,
     transition: { type: "spring", stiffness: 90, damping: 20 },
   },
-};
+} as const;
 
 export default function HeroSection() {
   const [current, setCurrent] = useState(0);
@@ -86,7 +86,7 @@ export default function HeroSection() {
         initial="hidden"
         animate="visible"
       >
-        <motion.div variants={itemVariants}>
+        <motion.div variants={itemVariants }>
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-sm font-semibold mb-6 backdrop-blur-sm">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -117,7 +117,7 @@ export default function HeroSection() {
         </motion.p>
 
         <motion.div
-          variants={itemVariants}
+          variants={itemVariants }
           className="flex flex-col sm:flex-row items-center justify-center gap-4"
         >
           <Link

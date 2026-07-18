@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import RegisterFrom from '@/components/auth/RegisterForm';
 import { Metadata } from 'next';
 

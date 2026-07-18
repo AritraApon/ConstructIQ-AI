@@ -42,7 +42,7 @@ const cards = [
 const containerVariants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.15 } },
-};
+} as const;
 
 const cardVariants = {
   hidden: { opacity: 0, y: 50 },
@@ -51,7 +51,7 @@ const cardVariants = {
     y: 0,
     transition: { type: "spring", stiffness: 80, damping: 18 },
   },
-};
+} as const;
 
 export default function FeaturesSection() {
   return (
