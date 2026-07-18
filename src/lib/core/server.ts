@@ -1,17 +1,30 @@
 'use server';
 
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
+import { auth } from "../auth";
 
 /**
- * Better Auth সেশন টোকেন কুকি থেকে রিড করে হেডার অবজেক্ট তৈরি করে।
- * এটি সরাসরি ব্যাকএন্ডের Authorization হেডার হিসেবে পাস হবে।
+ * Better Auth এর অফিশিয়াল API ব্যবহার করে সেশন থেকে সরাসরি টোকেন রিড করা
  */
-export const authHeader = async (): Promise<HeadersInit> => {
-  const cookieStore = await cookies();
-  // Better Auth-এর ডিফল্ট সেশন কুকি নাম
-  const token = cookieStore.get("better-auth.session_token")?.value;
+export const getUserToken = async (): Promise<string | null> => {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers() // passing the Next.js request headers
+    });
+    return session?.session?.token || null;
+  } catch (error) {
+    console.error("Error getting user token via Better Auth API:", error);
+    return null;
+  }
+};
 
-  return token ? { Authorization: `Bearer ${token}` } : {};
+/**
+ * TypeScript ফ্রেন্ডলি ক্লিন authHeader (Type mismatch ফিক্সড)
+ */
+export const authHeader = async (): Promise<Record<string, string>> => {
+  const token = await getUserToken();
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
 };
 
 // ব্যাকএন্ডের বেস ইউআরএল (ডিফল্ট: http://localhost:5000)
@@ -49,7 +62,7 @@ export const getMutation = async <T>(url: string): Promise<T | { error: true; me
 };
 
 /**
- * ২. POST Mutation (নতুন ডাটা ক্রিয়েট/অ্যাড করার জন্য)
+ * ২. POST Mutation (নতুন ডাটা ক্রিয়েট/অ্যাড করার জন্য)
  */
 export const postMutation = async <T, D>(url: string, data: D): Promise<T | { error: true; message: string }> => {
   const baseUrl = getBaseUrl();
@@ -139,19 +152,15 @@ export const deleteMutation = async <T>(url: string): Promise<T | { error: true;
   }
 };
 
-
-
 export const getProjects = async (): Promise<any> => {
-
   const res = await getMutation<any>('/api/projects');
   if (res && 'error' in res) {
     throw new Error(res.message);
   }
-  return res; // এটি পুরো অবজেক্ট { success: true, data: [...] } রিটার্ন করবে
+  return res;
 };
 
 export const deleteProject = async (id: string): Promise<boolean> => {
-
   const res = await deleteMutation<any>(`/api/projects/${id}`);
   if (res && 'error' in res) {
     return false;

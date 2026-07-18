@@ -105,7 +105,51 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
   }, [parsedData]);
 
   const handleExportPDF = () => {
+    const projectTitle = project?.title?.trim() || "Project Estimate";
+    const dateStr = new Date().toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
+    // Inject a scoped print stylesheet that isolates only the report section
+    const styleEl = document.createElement("style");
+    styleEl.id = "__pdf-explore-override";
+    styleEl.innerHTML = `
+      @media print {
+        body > * { display: none !important; }
+        body > main { display: block !important; }
+        body > main > * { display: none !important; }
+        body > main #explore-print-section {
+          display: block !important;
+          visibility: visible !important;
+        }
+        #explore-print-section * {
+          visibility: visible !important;
+        }
+        #explore-print-section::before {
+          content: "ConstructIQ AI Report";
+          display: block;
+          font-size: 14pt;
+          font-weight: 700;
+          color: #111827;
+          margin-bottom: 16px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #10B981;
+        }
+      }
+    `;
+    document.head.appendChild(styleEl);
+
+    // Set a descriptive title as the default PDF filename hint for browsers
+    const prevTitle = document.title;
+    document.title = `ConstructIQ \u2014 ${projectTitle} \u2014 Report (${dateStr})`;
+
     window.print();
+
+    // Restore everything after the print dialog closes
+    document.title = prevTitle;
+    document.head.removeChild(styleEl);
   };
 
   if (loading) {
@@ -136,6 +180,7 @@ export default function ExploreDetailsPage({ params }: { params: Promise<{ id: s
 
   return (
     <motion.div 
+      id="explore-print-section"
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}

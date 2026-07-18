@@ -121,7 +121,7 @@ export default function HeroSection() {
           className="flex flex-col sm:flex-row items-center justify-center gap-4"
         >
           <Link
-            href="/register"
+            href="/items/add"
             className="group flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-[#020617] px-8 py-4 rounded-xl font-bold text-base transition-all duration-200 hover:shadow-[0_0_30px_rgba(16,185,129,0.45)] active:scale-95"
           >
             Get Started Free

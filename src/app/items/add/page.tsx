@@ -11,7 +11,9 @@ const AddItemsPage = async () => {
 
   return (
     <div>
+
       <AddItemForm userId={userId || ""} />
+      
     </div>
   );
 };

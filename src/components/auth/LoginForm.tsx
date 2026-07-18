@@ -26,7 +26,7 @@ export default function LoginForm() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard",
+        callbackURL: "/",
       });
       toast.success("Redirecting to Google...");
     } catch (err: any) {

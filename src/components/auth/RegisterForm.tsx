@@ -131,7 +131,7 @@ export default function RegisterPage() {
       password,
       name,
       image: uploadedImageUrl || undefined,
-      callbackURL: "/dashboard"
+      callbackURL: "/"
     }, {
       onRequest: () => {
         setIsSubmitting(true);

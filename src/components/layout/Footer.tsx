@@ -73,7 +73,7 @@ export default function Footer() {
             <div className="flex gap-3">
               {/* GitHub SVG */}
               <a
-                href="#"
+                href="https://github.com/AritraApon"
                 aria-label="GitHub"
                 className="w-9 h-9 rounded-lg border border-slate-800 flex items-center justify-center text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition-all duration-200 bg-slate-900/30 backdrop-blur-sm"
               >
@@ -82,7 +82,7 @@ export default function Footer() {
 
               {/* Twitter/X SVG */}
               <a
-                href="#"
+                href="https://protfolio-page-one.vercel.app"
                 aria-label="Twitter"
                 className="w-9 h-9 rounded-lg border border-slate-800 flex items-center justify-center text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition-all duration-200 bg-slate-900/30 backdrop-blur-sm"
               >
@@ -91,7 +91,7 @@ export default function Footer() {
 
               {/* LinkedIn SVG */}
               <a
-                href="#"
+                href="https://www.linkedin.com/in/aritro-mazumdar-011206apon"
                 aria-label="LinkedIn"
                 className="w-9 h-9 rounded-lg border border-slate-800 flex items-center justify-center text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition-all duration-200 bg-slate-900/30 backdrop-blur-sm"
               >

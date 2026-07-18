@@ -1,3 +1,57 @@
 @import "tailwindcss";
 
+/* ─── Print Styles ──────────────────────────────────────────────────────────
+   Suppresses all layout chrome (Navbar, Footer, Chatbot) and prepares a
+   clean single-page PDF output. Applied globally so both /items/add and
+   /explore/[id] PDF exports render consistently.
+   ─────────────────────────────────────────────────────────────────────────── */
+@media print {
+  /* Hide persistent layout elements */
+  nav,
+  footer,
+  [data-print="hidden"],
+  .print\:hidden {
+    display: none !important;
+  }
 
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 16mm 14mm;
+  }
+
+  /* Base body reset for print */
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Ensure the main content area fills the print page */
+  body > main,
+  #__next > main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Force print section to show and fill the page */
+  #estimate-print-section,
+  #explore-print-section {
+    display: block !important;
+    width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Prevent orphan rows in tables */
+  tr {
+    page-break-inside: avoid;
+  }
+
+  /* Recharts SVG – ensure colours are retained in print */
+  svg {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
