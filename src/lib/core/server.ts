@@ -29,7 +29,7 @@ export const authHeader = async (): Promise<Record<string, string>> => {
 
 // ব্যাকএন্ডের বেস ইউআরএল (ডিফল্ট: http://localhost:5000)
 const getBaseUrl = (): string => {
-  return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000";
+  return process.env.NEXT_PUBLIC_BASE_URL || "https://construct-iq-ai-server.vercel.app";
 };
 
 /**
