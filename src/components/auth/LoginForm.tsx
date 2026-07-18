@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from "react-toastify";
-import { authClient } from "@/lib/auth-client"; // তোমার দেওয়া ক্লায়েন্ট ইমপোর্ট
+import { authClient } from "@/lib/auth-client"; // তোমার দেওয়া ক্লায়েন্ট ইমপোর্ট
 import "react-toastify/dist/ReactToastify.css";
 
 export default function LoginForm() {
@@ -19,6 +19,7 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+  const [isDemoSubmitting, setIsDemoSubmitting] = useState(false); // ডেমো লগইনের জন্য নতুন স্টেট
 
   // Google Sign-In Handler
   const handleGoogleSignIn = async () => {
@@ -51,12 +52,46 @@ export default function LoginForm() {
       },
       onSuccess: () => {
         setIsSubmitting(false);
+        setIsDemoSubmitting(false);
         toast.success("Login Successful! Redirecting...");
         router.push("/");
       },
       onError: (ctx) => {
         setIsSubmitting(false);
+        setIsDemoSubmitting(false);
         toast.error(ctx.error.message || "Invalid email or password.");
+      },
+    });
+  };
+
+  // 🌟 Demo Login Handler (আগের কোডে কোনো ইমপ্যাক্ট ফেলবে না)
+  const handleDemoLogin = async () => {
+    setIsDemoSubmitting(true);
+
+    // স্টেটে ডেমো ক্রেডেনশিয়াল সেট করা হচ্ছে ভিজ্যুয়াল ফিডব্যাকের জন্য
+    const demoEmail = "d@d.com";
+    const demoPassword = "D12345678";
+
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+
+    await authClient.signIn.email({
+      email: demoEmail,
+      password: demoPassword,
+      rememberMe: false,
+      callbackURL: "/",
+    }, {
+      onRequest: () => {
+        setIsDemoSubmitting(true);
+      },
+      onSuccess: () => {
+        setIsDemoSubmitting(false);
+        toast.success("Logged in with Demo Account!");
+        router.push("/");
+      },
+      onError: (ctx) => {
+        setIsDemoSubmitting(false);
+        toast.error(ctx.error.message || "Demo login failed.");
       },
     });
   };
@@ -79,28 +114,49 @@ export default function LoginForm() {
           </p>
         </div>
 
-        {/* Google Sign-In Button */}
-        <div>
+        {/* Action Buttons (Google & Demo) */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {/* Google Sign-In Button */}
           <button
             type="button"
             onClick={handleGoogleSignIn}
-            disabled={isGoogleSubmitting || isSubmitting}
-            className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#10B981]/15 bg-[#020617]/40 py-2.5 text-sm font-semibold text-[#F8FAFC] transition-all duration-200 hover:bg-[#020617]/80 disabled:opacity-50"
+            disabled={isGoogleSubmitting || isSubmitting || isDemoSubmitting}
+            className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-[#10B981]/15 bg-[#020617]/40 py-2.5 text-xs font-semibold text-[#F8FAFC] transition-all duration-200 hover:bg-[#020617]/80 disabled:opacity-50"
           >
             {isGoogleSubmitting ? (
-              <svg className="animate-spin h-5 w-5 text-current" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
             ) : (
-              <svg className="h-5 w-5" viewBox="0 0 24 24">
+              <svg className="h-4 w-4" viewBox="0 0 24 24">
                 <path fill="#EA4335" d="M12 5.04c1.64 0 3.12.56 4.28 1.67l3.2-3.2C17.52 1.58 14.92 1 12 1 7.35 1 3.37 3.65 1.39 7.5l3.85 2.99c.92-2.75 3.48-4.45 6.76-4.45z"/>
                 <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.34H12v4.43h6.44c-.28 1.47-1.11 2.71-2.36 3.55l3.66 2.84c2.14-1.97 3.39-4.87 3.39-8.52z"/>
                 <path fill="#FBBC05" d="M5.24 10.49c-.24-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29L1.39 7.5C.5 9.3.01 11.33.01 13.5s.49 4.2 1.38 6l3.85-3.01c-.24-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29z"/>
                 <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.92l-3.66-2.84c-1.01.68-2.31 1.08-4.3 1.08-3.28 0-5.84-1.7-6.76-4.45L1.39 16.86C3.37 20.35 7.35 23 12 23z"/>
               </svg>
             )}
-            Continue with Google
+            Google
+          </button>
+
+          {/* 🌟 New Demo Login Button */}
+          <button
+            type="button"
+            onClick={handleDemoLogin}
+            disabled={isGoogleSubmitting || isSubmitting || isDemoSubmitting}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-sky-500/20 bg-sky-500/10 py-2.5 text-xs font-semibold text-sky-400 transition-all duration-200 hover:bg-sky-500/20 disabled:opacity-50"
+          >
+            {isDemoSubmitting ? (
+              <svg className="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            ) : (
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 01-3-3h3a3 3 0 013 3v1" />
+              </svg>
+            )}
+            Demo Login
           </button>
         </div>
 
@@ -182,7 +238,7 @@ export default function LoginForm() {
           <div className="pt-1">
             <button
               type="submit"
-              disabled={isSubmitting || isGoogleSubmitting}
+              disabled={isSubmitting || isGoogleSubmitting || isDemoSubmitting}
               className="flex w-full justify-center rounded-lg bg-[#10B981] py-2 text-sm font-bold text-[#020617] transition-all duration-200 hover:bg-[#10B981]/90 hover:shadow-[0_0_12px_rgba(16,185,129,0.35)] disabled:opacity-50"
             >
               {isSubmitting ? (
